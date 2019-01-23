@@ -26,10 +26,10 @@
         		userPasswordCheck = document.getElementById('userPasswordCheck').value;
 
         		if(userPassword == userPasswordCheck && userName.length > 0){
-        			// Salt and hash userPassword
+        			// Hash userPassword
         			// Must store result on server
         			salt = randStr(16);
-        			userPasswordHash = SHA256(userPassword + salt);
+        			userPasswordHash = SHA256(userPassword);
 
         			// Generate a new deterministic RSA Key using random seed
         			// Must store new public key on server

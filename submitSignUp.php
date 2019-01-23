@@ -35,15 +35,18 @@
 		    $dbResults = dbSelect($table, $cols, $where1, $where2, $limit, $orderBy, $dbc);
 			if(sizeof($dbResults) == 0){
 
-				// Salt and hash again so the hashword stored in DB can not be directly used
-				// for login in the event of a comprimised DB. 
-				$salt2 = randStr(16);
-				$hashword = sha1($hashword . $salt2);
+				// Salt hashword and then hash the result.
+				// This disallows attacker with access to DB table from faking sign in.
+				// Note, password had to be hashed prior to being sent to server in order to
+				// preserve "host-proof" nature. But to the server, what it receieves is effectively
+				// a plain text password which means this value itself cant be stored. Thus, it
+				// is salted and hashed prior to storage. 
+				$hashword = sha1($hashword . $salt);
 
 				// Use dbInsert() from dbInterface.php store article data
 				$table = "user";
-				$cols = array("userName", "salt", "salt2", "hashword", "publicKey", "encryptedRsaSeed");
-				$vals = array($userName, $salt, $salt2, $hashword, $publicKey, $encryptedRsaSeed);
+				$cols = array("userName", "salt", "hashword", "publicKey", "encryptedRsaSeed");
+				$vals = array($userName, $salt, $hashword, $publicKey, $encryptedRsaSeed);
 				$dbResult = dbInsert($table, $cols, $vals, $dbc);
 
 				echo $dbResult;

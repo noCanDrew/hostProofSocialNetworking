@@ -8,7 +8,7 @@
 		$hashword = strip_tags(trim($_POST['hashword']));
 		
 		$table = "user";
-	    $cols = array("salt2");
+	    $cols = array("salt");
 	    $where1 = array("userName");
 	    $where2 = array($userName);
 	    $limit = "1";
@@ -18,8 +18,8 @@
 	    if(ctype_alnum($dbResults[0][0])){
 	    	$hashword = sha1($hashword . $dbResults[0][0]);
 
-		    // Perform select on user table in DB to retrieve user's info
-			// Echo result back to requester
+		    // Perform select on user table in DB to retrieve user's info.
+			// Echo result back to requester.
 		    $table = "user";
 		    $cols = array("id", "encryptedRsaSeed", "publicKey");
 		    $where1 = array("userName", "hashword");

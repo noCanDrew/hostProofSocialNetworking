@@ -11,7 +11,12 @@
 	password locally in order to decrypt the seed on every page they visit which would 
 	also be vulnerable. And this also does not require the storage of their password 
 	server side which would enable the server to decrypt the rsaSeed. 
-	- ...
+	- The returned encryptedRsaSeed client gets from server is decrypted one time on
+	initial login (on the client side) using the users actual password (which the server
+	never sees). This unencrypted seed is then re-encrypted with some throw away AES
+	key and that key is now stored on the server to be retrieved whenever the client 
+	needs it. Note, the server has the key but does not have the encryptedRsaSeed the
+	key decrypts. So the server still cant reconstruct the user's seed.  
 */
 
 
@@ -54,96 +59,81 @@
 
         		if(userPassword.length == 16 && userName.length > 0){
 
-        			// Request salt for userName's password
-        			salt = "";
+        			// Hash password prior to sending it to server so that server never sees the plaintext
+        			// password of the user. Note, additional salt+hashing is done server side for reasons
+        			// explained in submitLogin.php
+					userPasswordHash = SHA256(userPassword);
 					http = new XMLHttpRequest();
-					url = 'requestUserPasswordSalt.php';
-					params = 'name=' + userName;
+					url = 'submitLogin.php';
+					params = 'name=' + userName + 
+							 '&hashword=' + userPasswordHash;
 					http.open('POST', url, true);
 					http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-					http.onreadystatechange = function(){//Call a function when the state changes.
+					http.onreadystatechange = function() {//Call a function when the state changes.
 					    if(http.readyState == 4 && http.status == 200){
-					        salt = http.responseText;
-					        // If the user exists, salt will be equal to that user's password salt
-							// Hash their password with the salt and send to server for verification
-							if(salt.length == 16){
-								result = "";
-								userPasswordHash = SHA256(userPassword + salt);
-								http2 = new XMLHttpRequest();
-								url2 = 'submitLogin.php';
-								params2 = 'name=' + userName + 
-										 '&hashword=' + userPasswordHash;
-								http2.open('POST', url2, true);
-								http2.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-								http2.onreadystatechange = function() {//Call a function when the state changes.
-								    if(http2.readyState == 4 && http.status == 200){
-								        result = http2.responseText;
-								        
-										// If user has been verified...
-										if(result.length > 0 && result != "error"){
-											results = result.split(";");
-											encryptedRsaSeed = results[0];
-											publicKeyReturned = results[1];
-											
-											// decrypt rsa seed using userPassword
-											var utf8 = unescape(encodeURIComponent(userPassword));
+					        result = http.responseText;
+					        
+							// If user has been verified...
+							if(result.length > 0 && result != "error"){
+								results = result.split(";");
+								encryptedRsaSeed = results[0];
+								publicKeyReturned = results[1];
+								
+								// decrypt rsa seed using userPassword
+								var utf8 = unescape(encodeURIComponent(userPassword));
+								var key = [];
+								for(var i = 0; i < utf8.length; i++){
+								    key.push(utf8.charCodeAt(i));
+								}
+								var encryptedBytes = aesjs.utils.hex.toBytes(encryptedRsaSeed);
+								var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5));
+								var decryptedBytes = aesCtr.decrypt(encryptedBytes);
+								var seed = aesjs.utils.utf8.fromBytes(decryptedBytes);
+								
+								// using seed, generate RSA keys
+								newRSAkey = cryptico.generateRSAKey(seed, 1024);
+	        					newPublicKeyString = cryptico.publicKeyString(newRSAkey);
+	        					
+	        					// If valid return...
+	        					if(newPublicKeyString == publicKeyReturned){
+	        						// create random session key and send it to server for server side storage
+	        						// Note, the server does not have the thing the key decrypts because the
+	        						// server is to remain untrusted.
+	        						// On every page load post login, this key is to be insterted into the
+	        						// javascript of the page so that the client can use it to decrypt the
+	        						// the locally stored encryptedSeed 
+	        						var http2 = new XMLHttpRequest();
+									var url2 = 'setAesSessionKey.php';
+									var params2 = 'aesSessionKey=' + aesSessionKey;
+									http2.open('POST', url2, true);
+									http2.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+									http2.onreadystatechange = function() {//Call a function when the state changes.
+									    if(http2.readyState == 4 && http2.status == 200){
+									        // Encrypt seed with AES using session key
+			        						var utf8 = unescape(encodeURIComponent(aesSessionKey));
 											var key = [];
 											for(var i = 0; i < utf8.length; i++){
 											    key.push(utf8.charCodeAt(i));
 											}
-											var encryptedBytes = aesjs.utils.hex.toBytes(encryptedRsaSeed);
-											var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5));
-											var decryptedBytes = aesCtr.decrypt(encryptedBytes);
-											var seed = aesjs.utils.utf8.fromBytes(decryptedBytes);
-											
-											// using seed, generate RSA keys
-											newRSAkey = cryptico.generateRSAKey(seed, 1024);
-				        					newPublicKeyString = cryptico.publicKeyString(newRSAkey);
-				        					
-				        					// If valid return...
-				        					if(newPublicKeyString == publicKeyReturned){
-				        						// create random session key and send it to server for server side storage
-				        						// Note, the server does not have the thing the key decrypts because the
-				        						// server is to remain untrusted.
-				        						// On every page load post login, this key is to be insterted into the
-				        						// javascript of the page so that the client can use it to decrypt the
-				        						// the locally stored encryptedSeed 
-				        						var http3 = new XMLHttpRequest();
-												var url3 = 'setAesSessionKey.php';
-												var params3 = 'aesSessionKey=' + aesSessionKey;
-												http3.open('POST', url3, true);
-												http3.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-												http3.onreadystatechange = function() {//Call a function when the state changes.
-												    if(http3.readyState == 4 && http3.status == 200){
-												        // Encrypt seed with AES using session key
-						        						var utf8 = unescape(encodeURIComponent(aesSessionKey));
-														var key = [];
-														for(var i = 0; i < utf8.length; i++){
-														    key.push(utf8.charCodeAt(i));
-														}
-														var textBytes = aesjs.utils.utf8.toBytes(seed);
-														var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5)); // need to randomize the counter seed and save it as well
-														var encryptedBytes = aesCtr.encrypt(textBytes);
-														var encryptedSeed = aesjs.utils.hex.fromBytes(encryptedBytes);
+											var textBytes = aesjs.utils.utf8.toBytes(seed);
+											var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5)); // need to randomize the counter seed and save it as well
+											var encryptedBytes = aesCtr.encrypt(textBytes);
+											var encryptedSeed = aesjs.utils.hex.fromBytes(encryptedBytes);
 
-														// Store name, public key, and encrypted seed in client's local storage
-														window.localStorage.setItem("userName", userName);
-														window.localStorage.setItem("publicKey", newPublicKeyString);
-														window.localStorage.setItem("encryptedSeed", encryptedSeed);
-														
-														location.href = "https://collaber.org/harpocrates";
-												    }
-												} 
-												http3.send(params3);
-				        					} else document.getElementById('output').innerHTML += "Error: Server connectivity/storage issue .<br>";
-										} else document.getElementById('output').innerHTML += "Error: Wrong username/password combination.<br>";
-								    } 
-								} 
-								http2.send(params2);
-							} else document.getElementById('output').innerHTML += "Error: Return invalid.<br>";
+											// Store name, public key, and encrypted seed in client's local storage
+											window.localStorage.setItem("userName", userName);
+											window.localStorage.setItem("publicKey", newPublicKeyString);
+											window.localStorage.setItem("encryptedSeed", encryptedSeed);
+											
+											location.href = "https://collaber.org/harpocrates";
+									    }
+									} 
+									http2.send(params2);
+	        					} else document.getElementById('output').innerHTML += "Error: Server connectivity/storage issue .<br>";
+							} else document.getElementById('output').innerHTML += "Error: Wrong username/password combination.<br>";
 					    } 
 					} 
-					http.send(params);
+					http.send(params);	
         		} else document.getElementById('output').innerHTML += "Error: invalid password.<br>";
         	}
         </script>
