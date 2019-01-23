@@ -1,6 +1,7 @@
 <?php
 	include "library/sessionStart.php";
 	include "library/dbInterface.php";
+	include "library/phpRandomStringGenerator.php";
 
 	if(!empty($_POST["name"]) &&
 	!empty($_POST["salt"]) &&
@@ -34,10 +35,15 @@
 		    $dbResults = dbSelect($table, $cols, $where1, $where2, $limit, $orderBy, $dbc);
 			if(sizeof($dbResults) == 0){
 
+				// Salt and hash again so the hashword stored in DB can not be directly used
+				// for login in the event of a comprimised DB. 
+				$salt2 = randStr(16);
+				$hashword = sha1($hashword . $salt2);
+
 				// Use dbInsert() from dbInterface.php store article data
 				$table = "user";
-				$cols = array("userName", "salt", "hashword", "publicKey", "encryptedRsaSeed");
-				$vals = array($userName, $salt, $hashword, $publicKey, $encryptedRsaSeed);
+				$cols = array("userName", "salt", "salt2", "hashword", "publicKey", "encryptedRsaSeed");
+				$vals = array($userName, $salt, $salt2, $hashword, $publicKey, $encryptedRsaSeed);
 				$dbResult = dbInsert($table, $cols, $vals, $dbc);
 
 				echo $dbResult;

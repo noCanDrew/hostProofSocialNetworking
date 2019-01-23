@@ -25,8 +25,8 @@
     // Include library for database interfacing
 	include "library/sessionStart.php";
     include "library/dbInterface.php";
-    if(!isset($_SESSION["aesSessionKey"])) 
-        header("Location: https://collaber.org/harpocrates/login.php");
+    if(isset($_SESSION["aesSessionKey"])) 
+        header("Location: https://collaber.org/harpocrates");
 ?><!DOCTYPE HTML>
 
 <html>
