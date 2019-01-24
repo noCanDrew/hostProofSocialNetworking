@@ -53,12 +53,10 @@
     	<script>
     		function login(){
     			var aesSessionKey = randStr(16);
-
-				userName = document.getElementById('userName').value;
-        		userPassword = document.getElementById('userPassword').value;
+				var userName = document.getElementById('userName').value.toLowerCase();
+        		var userPassword = document.getElementById('userPassword').value;
 
         		if(userPassword.length == 16 && userName.length > 0){
-
         			// Hash password prior to sending it to server so that server never sees the plaintext
         			// password of the user. Note, additional salt+hashing is done server side for reasons
         			// explained in submitLogin.php
@@ -69,7 +67,7 @@
 							 '&hashword=' + userPasswordHash;
 					http.open('POST', url, true);
 					http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-					http.onreadystatechange = function() {//Call a function when the state changes.
+					http.onreadystatechange = function() {
 					    if(http.readyState == 4 && http.status == 200){
 					        result = http.responseText;
 					        
@@ -96,18 +94,18 @@
 	        					
 	        					// If valid return...
 	        					if(newPublicKeyString == publicKeyReturned){
-	        						// create random session key and send it to server for server side storage
+	        						// Create random session key and send it to server for server side storage
 	        						// Note, the server does not have the thing the key decrypts because the
 	        						// server is to remain untrusted.
 	        						// On every page load post login, this key is to be insterted into the
 	        						// javascript of the page so that the client can use it to decrypt the
-	        						// the locally stored encryptedSeed 
+	        						// the locally stored encryptedSeed.
 	        						var http2 = new XMLHttpRequest();
 									var url2 = 'setAesSessionKey.php';
 									var params2 = 'aesSessionKey=' + aesSessionKey;
 									http2.open('POST', url2, true);
 									http2.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-									http2.onreadystatechange = function() {//Call a function when the state changes.
+									http2.onreadystatechange = function() {
 									    if(http2.readyState == 4 && http2.status == 200){
 									        // Encrypt seed with AES using session key
 			        						var utf8 = unescape(encodeURIComponent(aesSessionKey));
@@ -116,7 +114,7 @@
 											    key.push(utf8.charCodeAt(i));
 											}
 											var textBytes = aesjs.utils.utf8.toBytes(seed);
-											var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5)); // need to randomize the counter seed and save it as well
+											var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5)); 
 											var encryptedBytes = aesCtr.encrypt(textBytes);
 											var encryptedSeed = aesjs.utils.hex.fromBytes(encryptedBytes);
 

@@ -25,7 +25,7 @@
         		userPassword = document.getElementById('userPassword').value;
         		userPasswordCheck = document.getElementById('userPasswordCheck').value;
 
-        		if(userPassword == userPasswordCheck && userName.length > 0){
+        		if(userPassword == userPasswordCheck && userName.length > 0 && userName.length <= 16){
         			// Hash userPassword
         			// Must store result on server
         			salt = randStr(16);

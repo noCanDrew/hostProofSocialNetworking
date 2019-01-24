@@ -75,7 +75,7 @@
         </script>
     </head>
     
-    <body onload="updateMessages(); buildEmotesList()">
+    <body onload="updateMessages(); buildEmotesList(); buildStickerList()">
         <div id = "messagesContainer" class = "messagesContainer">
             <div id = "output"></div>
         </div>
@@ -84,8 +84,10 @@
             <div class = "messageBoxButtons">
                 <button class = "button" onclick="postMessage()">Submit</button>
                 <button class = "button" onclick="displayEmotes()">Emoji</button>
+                <button class = "button" onclick="displayStickers()">Stickers</button>
                 <!--<input type="file" onchange="postImage(this)"/>-->
                 <div id = "emotesList" class = "emotesList"></div>
+                <div id = "stickerList" class = "emotesList"></div>
             </div>
             <div class = "messageBoxContainer">
                 <textarea 

@@ -18,6 +18,7 @@
 		// Ensure user inputs meet initial submission criteria
 		if(strlen($salt) == 16 &&
 			strlen($userName) > 0 &&
+			strlen($userName) <= 16 &&
 			strlen($hashword) == 64 && 
 			strlen($publicKey) == 172 &&
 			strlen($encryptedRsaSeed) == 256 &&

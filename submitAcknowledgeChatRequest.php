@@ -10,7 +10,7 @@
 		!empty($_POST["requesterEncryptedSecretAesKey"]) &&
 		!empty($_POST["receiverEncryptedSecretAesKey"])){
 		
-		// get user id of the original requester
+		// Get user id of the original requester
 		$requesterUserName = strip_tags(trim($_POST['requesterUserName']));
 		$table = "user";
 	    $cols = array("id");
@@ -20,7 +20,7 @@
 	    $orderBy = "";
 	    $dbResults = dbSelect($table, $cols, $where1, $where2, $limit, $orderBy, $dbc);
 
-	    // set the two user ids and clean their encryptedSecretAesKey
+	    // Set the two user ids and clean their encryptedSecretAesKeys
 	    $receiverUserId = $_SESSION["userId"];
 	    $requesterUserId = $dbResults[0][0];
 	    $requesterEncryptedSecretAesKey = str_replace(" ","+", 
@@ -30,7 +30,7 @@
 	    	strip_tags(trim($_POST['receiverEncryptedSecretAesKey']))
 	    );
 
-		// get the private chat associated with the two users
+		// Get the private chat associated with the two users
 		$table = "privateChat";
 	    $cols = array("id", "acknowledged");
 	    $where1 = array("idUser1", "idUser2");
