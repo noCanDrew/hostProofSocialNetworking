@@ -19,9 +19,9 @@ var maxMessageLength = 255;     // Max length any new message can be.
 var intervalExtension = 30;     // Multiplier for interval mod on chat update.
 
 // User specific global variables.
-var userName = window.localStorage.userName;
-var publicKey = window.localStorage.publicKey;
-var encryptedRsaSeed = window.localStorage.encryptedSeed;
+var userName = removeTags(window.localStorage.userName);
+var publicKey = removeTags(window.localStorage.publicKey);
+var encryptedRsaSeed = removeTags(window.localStorage.encryptedSeed);
 
 // Decrypt rsa seed using aesSessionKey (provided by given php pages).
 // Using this seed, generate user's RSA keys.
@@ -218,17 +218,19 @@ function buildEmotesList(){
 
 // Toggles the visibility of the emoji menu in chat.
 function displayEmotes(){
-    if(displayEmoteCheck()) 
+    if(displayEmoteCheck()){
         document.getElementById('emotesList').style.display = "inherit";
-    else document.getElementById('emotesList').style.display = "none";
+    } else document.getElementById('emotesList').style.display = "none";
 }
 
 // If enough remaining room exists in the text area for a valid message, adds emote code 
 // to the text area in chat. 
 function addEmoteToTextBox(emote){
     tmp = document.getElementById('messageBox').value;
-    if(maxMessageLength - tmp.length - emote.length > 0)
+    if(maxMessageLength - tmp.length - emote.length > 0){
         document.getElementById('messageBox').value += emote;
+        displayEmotes();
+    }
 }
 
 // Closure for emoji display toggle
@@ -240,6 +242,68 @@ var displayEmoteCheck = (function(){
         return check;
     }
 })();
+
+
+
+
+
+
+
+sticker = ["tester"];
+
+
+function buildStickerList(){
+    for(var a = 0; a < sticker.length; a++){
+        document.getElementById('stickerList').innerHTML += 
+           '<a style = "cursor: pointer;" onclick = "sendSticker(\'' + 
+            sticker[a] + '\')"><img src="library/stickers/' + sticker[a] + '.jpg"></a>'; 
+    }
+}
+
+// Toggles the visibility of the emoji menu in chat.
+function displayStickers(){
+    if(displayStickerCheck()){
+        document.getElementById('stickerList').style.display = "inherit";
+    } else document.getElementById('stickerList').style.display = "none";
+}
+
+// Post "message" of the format ":sticker-_name_of_sticker-:" 
+function sendSticker(sticker){
+    iv = randStr(16);
+    message = ":sticker-" + sticker;
+    paddedMessage = padMessage(message, maxMessageLength + 1);
+    aesEncryptedMessage = aesEncryptWithIv(paddedMessage, chatAesKey, iv);
+
+    // Post encrypted message to server
+    var http = new XMLHttpRequest();
+    var url = 'submitMessage.php';
+    var params = 'aesEncryptedMessage=' + aesEncryptedMessage + 
+                 '&iv=' + iv +
+                 '&chatId=' + chatId;           
+    http.open('POST', url, true);
+    http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    http.onreadystatechange = function() {
+        if(http.readyState == 4 && http.status == 200) {
+            if(http.responseText == "success"){
+            } else document.getElementById('output').innerHTML += 
+                removeTags(http.responseText);
+        }
+    }
+    http.send(params);
+    displayStickers();
+}
+
+// Closure for emoji display toggle
+var displayStickerCheck = (function(){
+    var check = false;
+    return function(){
+        if(check) check = false; 
+        else check = true;
+        return check;
+    }
+})();
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -343,13 +407,10 @@ var intervalMod = (function(){
 // Returns a random color seeded by the first char of input text.
 // Used for user icon generation in chat based on user names. 
 function randColor(myText){
-    x = myText.charCodeAt(0) % 6;
-    if(x == 0) return "rgb(0,0,0)";
-    else if(x == 1) return "rgb(95,95,95)";
-    else if(x == 2) return "rgb(100,0,255)";
-    else if(x == 3) return "rgb(255,100,0)";
-    else if(x == 4) return "rgb(0,255,100)";
-    else return "rgb(200,200,200)";
+    x = myText.charCodeAt(0) % 3;
+    if(x == 0) return "gradientColorOrange";
+    else if(x == 1) return "gradientColorGreen";
+    else return "gradientColorBlue";
 }
 
 // This function should be called on page load for chat.php thorugh the 
@@ -399,8 +460,15 @@ function getMessages(){
                     }
 
                     messageText = aesDecryptWithIv(message[1], chatAesKey, message[3]);
-                    messageText = emoteDecoder(depadMessage(messageText));
+                    messageText = emoteDecoder(depadMessage(messageText)).trim();
                     timeStamp = message[2].substring(10, 16);
+
+                    // Check if message is sticker
+                    // Sticker messages are of the format: :sticker-_name_of_sticker
+                    if(/^:sticker-/.test(messageText)){
+                        imageSrc = messageText.split(":sticker-");
+                        messageText = '<img src = "library/stickers/' + imageSrc[1] + '.jpg">';
+                    } 
                     newText += getMessageHtml(a, message[0], messageText, timeStamp);
                 }
                 document.getElementById('output').innerHTML += newText;
@@ -415,21 +483,21 @@ function getMessages(){
 // Generates HTML out to be appended to the output div of chat
 function getMessageHtml(a, displayName, messageText, timeStamp){
     icon = displayName.substring(0, 1);
-    color = "background-color: " + randColor(icon) + ";";
+    color = randColor(icon);
 
     // CSS for user messages custimized for who in chat wrote the message
-    if(displayName == userName){
+    if(displayName.trim() == userName.trim()){
         side = "float: right;";
-        borderRadius = "border-radius: 8px 0px 8px 8px;";
+        borderRadius = "border-radius: .5em 0px .5em .5em;";
     } else {
         side = "float: left;";
-        borderRadius = "border-radius: 0px 8px 8px 8px;";
+        borderRadius = "border-radius: 0px .5em .5em .5em;";
     }
 
     // The message div and all of its contents
     return '' + 
     '<div id="messageContainer'+a+'" class="messageContainer" style="'+side+'">'+ 
-        '<div class="userIdCard" style="'+side+' '+color+'">'+icon+'</div>'+ 
+        '<div class="userIdCard '+color+'" style="'+side+'">'+icon+'</div>'+ 
         '<div class = "messageBody" style = "'+side+' '+borderRadius+'">'+ 
             '<p class = "letters">'+messageText+'</p>'+ 
             //'<div class = "timeStamp">' + timeStamp + '</div>' + 
