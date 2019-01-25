@@ -221,8 +221,7 @@ function displayEmotes(){
     if(displayEmoteCheck()){
         document.getElementById('emotesList').style.display = "block";
         if(window.getComputedStyle(document.getElementById('stickerList')).display === "block"){
-            displayStickerCheck();
-            document.getElementById('stickerList').style.display = "none";
+            displayStickers();
         }
     } else document.getElementById('emotesList').style.display = "none";
 }
@@ -275,8 +274,7 @@ function displayStickers(){
     if(displayStickerCheck()){
         document.getElementById('stickerList').style.display = "block";
         if(window.getComputedStyle(document.getElementById('emotesList')).display === "block"){
-            displayEmoteCheck();
-            document.getElementById('emotesList').style.display = "none";
+            displayEmotes();
         }
     } else document.getElementById('stickerList').style.display = "none";
 }
