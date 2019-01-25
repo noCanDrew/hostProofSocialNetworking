@@ -1,4 +1,6 @@
 <?php
+	// Performs a logic xor at the character level.
+	// Input must only contain chars contained in the alphabet.
 	function charLevelXor($str1, $str2){
 		if(strlen($str1) == strlen($str2)){
 			$ret = "";
@@ -11,6 +13,8 @@
 		} else return null;
 	}
 
+	// Takes in a string and some salt and produces a 64 char long string that is a result of chained salting/hashing
+	// with sha256.
 	function betterHash($str, $salt){
 		if(strlen($str) == 64 && strlen($salt) == 16){
 			$iterationFactor = 100;

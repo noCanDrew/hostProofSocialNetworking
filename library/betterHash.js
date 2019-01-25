@@ -1,4 +1,9 @@
+
+// Takes in a string and some salt and produces a 64 char long string that is a result of chained salting/hashing
+// with sha256.
 function betterHash(str, salt){
+	// Performs a logic xor at the character level.
+	// Input must only contain chars contained in the alphabet.
 	function charLevelXor(str1, str2){
 		if(str1.length == str2.length){
 			var ret = "";
