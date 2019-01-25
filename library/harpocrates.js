@@ -145,7 +145,7 @@ function padMessage(text, length){
 // meaningful text and the random pad string. 
 function depadMessage(text){
     tmp = text.split(" ");
-    return text.split(tmp[tmp.length - 1])[0];
+    return text.split(tmp[tmp.length - 1])[0].trim();
 }
 
 // https://medium.com/@dazcyril/generating-cryptographic-random-state-in-javascript-in-
@@ -219,7 +219,11 @@ function buildEmotesList(){
 // Toggles the visibility of the emoji menu in chat.
 function displayEmotes(){
     if(displayEmoteCheck()){
-        document.getElementById('emotesList').style.display = "inherit";
+        document.getElementById('emotesList').style.display = "block";
+        if(window.getComputedStyle(document.getElementById('stickerList')).display === "block"){
+            displayStickerCheck();
+            document.getElementById('stickerList').style.display = "none";
+        }
     } else document.getElementById('emotesList').style.display = "none";
 }
 
@@ -243,14 +247,20 @@ var displayEmoteCheck = (function(){
     }
 })();
 
-
-
-
-
-
-
 sticker = ["tester"];
 
+// Sticker messages are of the format: :sticker-_name_of_sticker
+// Given a string of text, replace it with an image tag and corrisponding sticker if the
+// string is formated to be an encoded sticker.
+function stickerDecoder(text){
+    if(/^:sticker-/.test(messageText)){
+        imageSrc = text.split(":sticker-");
+        return '<img ' + 
+            'src = "library/stickers/' + imageSrc[1] + '.jpg"' +  
+            'class = "sticker"' + 
+        '>';
+    } else return text;
+}
 
 function buildStickerList(){
     for(var a = 0; a < sticker.length; a++){
@@ -260,14 +270,18 @@ function buildStickerList(){
     }
 }
 
-// Toggles the visibility of the emoji menu in chat.
+// Toggles the visibility of the sticker menu in chat.
 function displayStickers(){
     if(displayStickerCheck()){
-        document.getElementById('stickerList').style.display = "inherit";
+        document.getElementById('stickerList').style.display = "block";
+        if(window.getComputedStyle(document.getElementById('emotesList')).display === "block"){
+            displayEmoteCheck();
+            document.getElementById('emotesList').style.display = "none";
+        }
     } else document.getElementById('stickerList').style.display = "none";
 }
 
-// Post "message" of the format ":sticker-_name_of_sticker-:" 
+// Post "message" of the format ":sticker-_name_of_sticker" 
 function sendSticker(sticker){
     iv = randStr(16);
     message = ":sticker-" + sticker;
@@ -293,7 +307,7 @@ function sendSticker(sticker){
     displayStickers();
 }
 
-// Closure for emoji display toggle
+// Closure for sticker display toggle
 var displayStickerCheck = (function(){
     var check = false;
     return function(){
@@ -460,15 +474,10 @@ function getMessages(){
                     }
 
                     messageText = aesDecryptWithIv(message[1], chatAesKey, message[3]);
-                    messageText = emoteDecoder(depadMessage(messageText)).trim();
+                    messageText = emoteDecoder(depadMessage(messageText));
+                    messageText = stickerDecoder(messageText);
                     timeStamp = message[2].substring(10, 16);
-
-                    // Check if message is sticker
-                    // Sticker messages are of the format: :sticker-_name_of_sticker
-                    if(/^:sticker-/.test(messageText)){
-                        imageSrc = messageText.split(":sticker-");
-                        messageText = '<img src = "library/stickers/' + imageSrc[1] + '.jpg">';
-                    } 
+                        
                     newText += getMessageHtml(a, message[0], messageText, timeStamp);
                 }
                 document.getElementById('output').innerHTML += newText;
