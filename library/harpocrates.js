@@ -297,6 +297,7 @@ function sendSticker(sticker){
     http.onreadystatechange = function() {
         if(http.readyState == 4 && http.status == 200) {
             if(http.responseText == "success"){
+                getMessages();
             } else document.getElementById('output').innerHTML += 
                 removeTags(http.responseText);
         }
@@ -420,8 +421,8 @@ var intervalMod = (function(){
 // Used for user icon generation in chat based on user names. 
 function randColor(myText){
     x = myText.charCodeAt(0) % 3;
-    if(x == 0) return "gradientColorOrange";
-    else if(x == 1) return "gradientColorGreen";
+    if(x == 0) return "gradientColorGreen";
+    else if(x == 1) return "gradientColorOrange";
     else return "gradientColorBlue";
 }
 
@@ -495,9 +496,11 @@ function getMessageHtml(a, displayName, messageText, timeStamp){
     // CSS for user messages custimized for who in chat wrote the message
     if(displayName.trim() == userName.trim()){
         side = "float: right;";
+        timeSide = "left: -3.5em;";
         borderRadius = "border-radius: .5em 0px .5em .5em;";
     } else {
         side = "float: left;";
+        timeSide = "right: -3.5em;";
         borderRadius = "border-radius: 0px .5em .5em .5em;";
     }
 
@@ -507,7 +510,7 @@ function getMessageHtml(a, displayName, messageText, timeStamp){
         '<div class="userIdCard '+color+'" style="'+side+'">'+icon+'</div>'+ 
         '<div class = "messageBody" style = "'+side+' '+borderRadius+'">'+ 
             '<p class = "letters">'+messageText+'</p>'+ 
-            //'<div class = "timeStamp">' + timeStamp + '</div>' + 
+            '<div class="timeStamp" style="'+timeSide+'">'+timeStamp+'</div>'+ 
         '</div>'+ 
     "</div>";
 }
@@ -537,6 +540,7 @@ function postMessage(){
             if(http.readyState == 4 && http.status == 200) {
                 if(http.responseText == "success"){
                     document.getElementById('messageBox').value = "";
+                    getMessages();
                 } else document.getElementById('output').innerHTML += 
                     removeTags(http.responseText);
             }
