@@ -47,6 +47,7 @@
         <script src="library/aes.js"></script>
         <script src="library/api.js"></script>
         <script src="library/aesRicemoo.js"></script>
+        <script src="library/detectMobile.js"></script>
 
         <script src="library/harpocrates.js"></script>
         <link rel="stylesheet" type="text/css" href="css/chat.css">
@@ -56,22 +57,6 @@
             // harpocrates.js
         	chatId = "<?php echo $chatId; ?>";
         	chatAesKey = rsaDecrypt("<?php echo $encryptedSecretKey; ?>");
-
-            // closure for emoji display toggle
-            var displayEmoteCheck = (function(){
-                var check = false;
-                return function(){
-                    if(check) check = false; 
-                    else check = true;
-                    return check;
-                }
-            })();
-
-            function displayEmotes(){
-                if(displayEmoteCheck()) 
-                    document.getElementById('emotesList').style.display = "inherit";
-                else document.getElementById('emotesList').style.display = "none";
-            }
         </script>
     </head>
     
@@ -99,4 +84,5 @@
             </div>
         </div>
     </body>
+    <script> if(!mobileCheck()) document.body.style.fontSize = "1.5em"; </script>
 </html>
