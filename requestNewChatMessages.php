@@ -10,12 +10,14 @@
 			$_SESSION["newestMessageTime"] = "2000-01-20 04:00:44";
 
 		// Check if polling is being abused by user
-		// Hard coded value 5 seconds with corresponding hard coded value 10 seconds in 
+		// Hard coded value 2 seconds with corresponding hard coded value 10 seconds in 
 		// updateMessages() in harpocrates.js. If polling is occuring more often than once 
-		// per 5 seconds, the client is abusing polling
+		// per 2 seconds, the client is abusing polling
+		// The discrepancy between 10 and 2 is to account for posting messages. Upon post,
+		// poster's client updates chat. Likely to be optized away later... "its a feature"
 		$time = intval(time());
 		$test = $time - $_SESSION["time"];
-		if($test > 5){
+		if($test > 2){
 			$_SESSION["time"] = $time;
 
 			if(!empty($_POST["chatId"])){

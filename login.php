@@ -45,6 +45,7 @@
         <script src="library/aes.js"></script>
         <script src="library/api.js"></script>
         <script src="library/aesRicemoo.js"></script>
+        <script src="library/detectMobile.js"></script>
         
         <script src="library/javascriptRandomStringGenerator.js"></script>
     </head>

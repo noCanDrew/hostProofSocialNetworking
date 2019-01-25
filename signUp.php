@@ -31,6 +31,12 @@
         			salt = randStr(16);
         			userPasswordHash = SHA256(userPassword);
 
+                    // Hash the password+salt client side so server could never save the bare password hash
+                    // for later cracking attempts.
+                    // Should also implement some password specific hashing schema since sha256 is only
+                    // OK at this and not necessarily the gold standard.
+                    // Also... change the login page to account for these changes as well...
+
         			// Generate a new deterministic RSA Key using random seed
         			// Must store new public key on server
         			randSeed = randStr(128);
