@@ -16,6 +16,8 @@
         <script src="library/api.js"></script>
         <script src="library/aesRicemoo.js"></script>
         <script src="library/javascriptRandomStringGenerator.js"></script>
+
+        <script src="library/betterHash.js"></script>
     </head>
     
     <body>
@@ -27,15 +29,9 @@
 
         		if(userPassword == userPasswordCheck && userName.length > 0 && userName.length <= 16){
         			// Hash userPassword
-        			// Must store result on server
+        			// Must store result(ish) on server
         			salt = randStr(16);
-        			userPasswordHash = SHA256(userPassword);
-
-                    // Hash the password+salt client side so server could never save the bare password hash
-                    // for later cracking attempts.
-                    // Should also implement some password specific hashing schema since sha256 is only
-                    // OK at this and not necessarily the gold standard.
-                    // Also... change the login page to account for these changes as well...
+        			userPasswordHash = betterHash(userPassword, salt);
 
         			// Generate a new deterministic RSA Key using random seed
         			// Must store new public key on server
@@ -67,9 +63,10 @@
 								 '&encryptedRsaSeed=' + encryptedHex;
 					http.open('POST', url, true);
 					http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-					http.onreadystatechange = function() {
+					http.onreadystatechange = function(){
 					    if(http.readyState == 4 && http.status == 200) {
-					        alert(http.responseText);
+					        if(http.responseText == "success") alert("success");
+                            else alert("error");
 					    }
 					}
 					http.send(params);

@@ -1,8 +1,8 @@
 <?php
 	include "library/sessionStart.php";
 	include "library/dbInterface.php";
-	include "library/phpRandomStringGenerator.php";
-
+	include "library/betterHash.php";
+	
 	if(!empty($_POST["name"]) &&
 	!empty($_POST["salt"]) &&
 	!empty($_POST["hashword"]) &&
@@ -35,14 +35,13 @@
 		    $orderBy = "";
 		    $dbResults = dbSelect($table, $cols, $where1, $where2, $limit, $orderBy, $dbc);
 			if(sizeof($dbResults) == 0){
-
 				// Salt hashword and then hash the result.
 				// This disallows attacker with access to DB table from faking sign in.
 				// Note, password had to be hashed prior to being sent to server in order to
 				// preserve "host-proof" nature. But to the server, what it receieves is effectively
 				// a plain text password which means this value itself cant be stored. Thus, it
-				// is salted and hashed prior to storage. 
-				$hashword = sha1($hashword . $salt);
+				// is salted and hashed prior to storage as well. 
+				$hashword = betterHash($hashword, $salt);
 
 				// Use dbInsert() from dbInterface.php store article data
 				$table = "user";
