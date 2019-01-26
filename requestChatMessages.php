@@ -52,7 +52,8 @@
 			    $images = dbSelect($table, $cols, $where1, $where2, $limit, $orderBy, $dbc);
 			    */
 
-			    $dbResults = array_merge($messages, $images);
+			    //$dbResults = array_merge($messages, $images);
+			    $dbResults = $messages;
 			    foreach ($dbResults as $key => $post) {
 				   $timestamps[$key] = $post[4];
 				}

@@ -104,19 +104,26 @@
         <script src="library/aesRicemoo.js"></script>
 
         <script src="library/harpocrates.js"></script>
-        <link rel="stylesheet" type="text/css" href="css/chat.css">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
     </head>
     
     <body>
-        Establish connection with user: <input type="text" id = "userReceiver"><br>
-        <br>
-        <button onclick="establishPrivateChat()">
-            Submit
-        </button>
+        <div class = "indexSectionContainer">
+            Establish connection with user: <input type="text" id = "userReceiver"><br>
+            <button onclick="establishPrivateChat()">
+                Submit
+            </button>
+        </div>
 
         <div id = "output"></div>
-        <div id = "chatRequests">Chat Requests:<br><?php echo $chatRequests; ?></div>
-        <div id = "chats">Chats:<br><?php echo $chats; ?></div>
+        
+        <div id = "chatRequests" class = "indexSectionContainer">
+            Chat Requests:<br><?php echo $chatRequests; ?>
+        </div>
+
+        <div id = "chats" class = "indexSectionContainer">
+            Chats:<br><?php echo $chats; ?>
+        </div>
 
         <form action="submitLogout.php">
             <input type="submit" value="Logout" />
