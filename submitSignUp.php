@@ -54,4 +54,5 @@
 		} else echo "Error: username must be between 1 and 16 characters." . 
 					" Password must be exactly 16 characters";
 	} else echo "Error: missing informatio.n";
+	$dbc->close();
 ?>

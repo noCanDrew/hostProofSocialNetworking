@@ -70,4 +70,5 @@
 			} else echo "error 3"; 
 	    } else echo "error 2";
 	} else echo "error 1";
+	$dbc->close();
 ?>

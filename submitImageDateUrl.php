@@ -33,4 +33,5 @@
 			echo $dbResult;
 	    } else echo "error 2";
 	} else echo "error 1";
+	$dbc->close();
 ?>

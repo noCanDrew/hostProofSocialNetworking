@@ -49,4 +49,5 @@
 	} else {
 		echo "error";
 	}
+	$dbc->close();
 ?>
