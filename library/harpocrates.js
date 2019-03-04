@@ -567,6 +567,8 @@ function postGroupMessage(){
     message = document.getElementById('messageBox').value.trim();
     if(message.length > 0 && !ratchetLock){
         ratchetLock = true;
+        document.getElementById("messageSubmit").disabled = true;
+
         iv = randStr(16);
         message = message.substring(0, maxMessageLength - 1);
         paddedMessage = padMessage(message, maxMessageLength + 1);
@@ -594,16 +596,28 @@ function postGroupMessage(){
                     document.getElementById('tmpMessages').innerHTML += msg;
                     var objDiv = document.getElementById("messagesContainer");
                     objDiv.scrollTop = objDiv.scrollHeight;
+
                     ratchetLock = false;
+                    reEnablePosting("messageSubmit", 3000);
                 } else {
                     // step back posting ratchet by 1
 
                     ratchetLock = false;
+                    reEnablePosting("messageSubmit", 3000);
                 }
             }
         }
         http.send(params);
     }
+}
+
+function reEnablePosting(id, time){
+    setTimeout(
+        function(){
+            document.getElementById(id).disabled = false;
+        },
+        time
+    );
 }
 
 // Return true if ratchet's state is properly known.
