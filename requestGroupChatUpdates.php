@@ -75,13 +75,13 @@
 				    $newMessages->close();
 
 				    if(count($dbResults) > 0){
-				    	$_SESSION[$groupChatId . "exponentialBackff"] = 5;
+				    	//$_SESSION[$groupChatId . "exponentialBackff"] = 5;
 						echo "data: " . json_encode($dbResults) . "\n\n";
 				    } else {
-				    	if($_SESSION[$groupChatId . "exponentialBackff"] < 300){
+				    	/*if($_SESSION[$groupChatId . "exponentialBackff"] < 300){
 				    		$_SESSION[$groupChatId . "exponentialBackff"] = pow($_SESSION[$groupChatId . "exponentialBackff"], 1.1);
-				    		var_dump(http_response_code(200));
-				    	} else header("Location: https://collaber.org/harpocrates");	
+				    	} *///else header("Location: https://collaber.org/harpocrates");	
+				    	var_dump(http_response_code(200));
 				    }
 					flush();
 					ob_flush();
