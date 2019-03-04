@@ -8,7 +8,7 @@
 	!empty($_POST["hashword"]) &&
 	!empty($_POST["publicKey"]) &&
 	!empty($_POST["encryptedRsaSeed"])){
-		$userName = strip_tags(trim($_POST['name']));
+		$userName = strtolower(strip_tags(trim($_POST['name'])));
 		$salt = strip_tags(trim($_POST['salt']));
 		$hashword = strip_tags(trim($_POST['hashword']));
 		$publicKey = strip_tags(trim($_POST['publicKey']));
@@ -30,7 +30,7 @@
 			$table = "user";
 		    $cols = array("id");
 		    $where1 = array("userName");
-		    $where2 = array($userName);
+		    $where2 = array(strtolower($userName));
 		    $limit = "1";
 		    $orderBy = "";
 		    $dbResults = dbSelect($table, $cols, $where1, $where2, $limit, $orderBy, $dbc);
@@ -51,7 +51,7 @@
 
 				echo $dbResult;
 			} else echo "Error: User name already in use.";
-		} else echo "Error: username must be between 1 and 16 characters." . 
+		} else echo "Error: username must be between 1 and 16 characters and can only contain alphanumerics." .
 					" Password must be exactly 16 characters";
 	} else echo "Error: missing informatio.n";
 	$dbc->close();

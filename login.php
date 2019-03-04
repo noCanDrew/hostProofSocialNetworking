@@ -36,6 +36,8 @@
 
 <html>
     <head>
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	
     	<!-- https://github.com/wwwtyro/cryptico/blob/master/README.md -->
     	<!-- https://github.com/ricmoo/aes-js -->
         <script src="library/jsbn.js"></script>
@@ -92,6 +94,7 @@
 											results = result.split(";");
 											encryptedRsaSeed = results[0];
 											publicKeyReturned = results[1];
+											userId = results[2];
 											
 											// Decrypt rsa seed using userPassword
 											var utf8 = unescape(encodeURIComponent(userPassword));
@@ -135,7 +138,8 @@
 														var encryptedSeed = aesjs.utils.hex.fromBytes(encryptedBytes);
 
 														// Store name, public key, and encrypted seed in client's local storage
-														window.localStorage.setItem("userName", userName);
+														window.localStorage.setItem("userId", userId);
+														window.localStorage.setItem("userName", userName.toLowerCase());
 														window.localStorage.setItem("publicKey", newPublicKeyString);
 														window.localStorage.setItem("encryptedSeed", encryptedSeed);
 														

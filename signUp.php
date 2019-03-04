@@ -6,6 +6,8 @@
 
 <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
     	<!-- https://github.com/wwwtyro/cryptico/blob/master/README.md -->
     	<!-- https://github.com/ricmoo/aes-js -->
         <script src="library/jsbn.js"></script>
@@ -56,7 +58,7 @@
                     // for storage
 					var http = new XMLHttpRequest();
 					var url = 'submitSignUp.php';
-					var params = 'name=' + userName + 
+					var params = 'name=' + userName.toLowerCase() + 
 								 '&salt=' + salt + 
 								 '&hashword=' + userPasswordHash + 
 								 '&publicKey=' + newPublicKeyString + 

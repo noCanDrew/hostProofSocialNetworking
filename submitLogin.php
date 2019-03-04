@@ -6,7 +6,7 @@
 	if(!empty($_POST["name"]) &&
 		!empty($_POST["salt"]) &&
 		!empty($_POST["hashword"])){
-		$userName = strip_tags(trim($_POST['name']));
+		$userName = strtolower(strip_tags(trim($_POST['name'])));
 		$salt = strip_tags(trim($_POST['salt']));
 		$hashword = strip_tags(trim($_POST['hashword']));
     	$hashword = betterHash($hashword, $salt);
@@ -25,7 +25,7 @@
 	    	$_SESSION["userId"] = $dbResults[0][0];
 		    $_SESSION["userName"] = $userName;
 
-			echo $dbResults[0][1] . ";" . str_replace(" ","+", $dbResults[0][2]);
+			echo $dbResults[0][1] . ";" . str_replace(" ","+", $dbResults[0][2])  . ";" . $dbResults[0][0];
 	    } else echo "error 2";
 	} else echo "error 3";
 	$dbc->close();
