@@ -94,7 +94,7 @@
 
         <div id = "userInputContainer" class = "userInputContainer">
             <div class = "messageBoxButtons">
-                <button class = "button" onclick="postGroupMessage()">Submit</button>
+                <button class = "button" id = "messageSubmit" onclick="postGroupMessage()">Submit</button>
                 <button class = "button" onclick="displayEmotes()">Emoji</button>
                 <button class = "button" onclick="displayStickers()">Stickers</button>
                 <div id = "emotesList" class = "emotesList"></div>
