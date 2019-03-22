@@ -17,18 +17,32 @@ var numUpdates = 0;             // Used for showing number of new messages in <t
 var userActive = true;          // Boolean for marking user as active/inactive
 var maxMessageLength = 255;     // Max length any new message can be.  
 var intervalExtension = 30;     // Multiplier for interval mod on chat update.
-var ratchetLock = false;
+var ratchetLock = false;        // Used for serializing ratchet usage
 
 // User specific global variables.
 var userId = removeTags(window.localStorage.userId);
 var userName = removeTags(window.localStorage.userName);
 var publicKey = removeTags(window.localStorage.publicKey);
-var encryptedRsaSeed = removeTags(window.localStorage.encryptedSeed);
+var encryptedSerialRsaKey = removeTags(window.localStorage.encryptedSerialRsaKey);
 
-// Decrypt rsa seed using aesSessionKey (provided by given php pages).
-// Using this seed, generate user's RSA keys.
-var seed = aesDecrypt(encryptedRsaSeed, aesSessionKey);
-var rsaKeyObject = cryptico.generateRSAKey(seed, 1024);
+// Decrypt serial rsa object using aesSessionKey (provided by given php pages).
+// Using this object, generate user's RSA keys.
+// Note, only generate this rsa object if its needed. It is not performant to generate 
+// and is only used when creating group chat keys or using group chat keys
+var rsaKeyObject = null;
+function generateRsaKeyObject(){
+    serialRsaKey = aesDecrypt(encryptedSerialRsaKey, aesSessionKey);
+    rsaKeyObject = deserializeRSAKey(serialRsaKey); 
+}
+
+function deserializeRSAKey(key) {
+    let json = JSON.parse(key);
+    let rsa = new RSAKey();
+    rsa.setPrivateEx(
+        json.n, json.e, json.d, json.p, json.q, json.dmp1, json.dmq1, json.coeff
+    );
+    return rsa;
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +59,7 @@ function rsaEncrypt(plainText, key){
 }
 
 function rsaDecrypt(cipherText){
+    if(rsaKeyObject == null) generateRsaKeyObject();
     return cryptico.decrypt(cipherText, rsaKeyObject).plaintext;
 }
 
@@ -222,9 +237,6 @@ function buildEmotesList(){
 function displayEmotes(){
     if(displayEmoteCheck()){
         document.getElementById('emotesList').style.display = "block";
-        if(window.getComputedStyle(document.getElementById('stickerList')).display === "block"){
-            displayStickers();
-        }
     } else document.getElementById('emotesList').style.display = "none";
 }
 
@@ -247,78 +259,6 @@ var displayEmoteCheck = (function(){
         return check;
     }
 })();
-
-sticker = ["tester"];
-
-// Sticker messages are of the format: :sticker-_name_of_sticker
-// Given a string of text, replace it with an image tag and corrisponding sticker if the
-// string is formated to be an encoded sticker.
-function stickerDecoder(text){
-    if(/^:sticker-/.test(messageText)){
-        imageSrc = text.split(":sticker-");
-        return '<img ' + 
-            'src = "library/stickers/' + imageSrc[1] + '.jpg"' +  
-            'class = "sticker"' + 
-        '>';
-    } else return text;
-}
-
-function buildStickerList(){
-    for(var a = 0; a < sticker.length; a++){
-        document.getElementById('stickerList').innerHTML += 
-           '<a style = "cursor: pointer;" onclick = "sendSticker(\'' + 
-            sticker[a] + '\')"><img src="library/stickers/' + sticker[a] + '.jpg"></a>'; 
-    }
-}
-
-// Toggles the visibility of the sticker menu in chat.
-function displayStickers(){
-    if(displayStickerCheck()){
-        document.getElementById('stickerList').style.display = "block";
-        if(window.getComputedStyle(document.getElementById('emotesList')).display === "block"){
-            displayEmotes();
-        }
-    } else document.getElementById('stickerList').style.display = "none";
-}
-
-// Post "message" of the format ":sticker-_name_of_sticker" 
-function sendSticker(sticker){
-    iv = randStr(16);
-    message = ":sticker-" + sticker;
-    paddedMessage = padMessage(message, maxMessageLength + 1);
-    aesEncryptedMessage = aesEncryptWithIv(paddedMessage, chatAesKey, iv);
-
-    // Post encrypted message to server
-    var http = new XMLHttpRequest();
-    var url = 'submitMessage.php';
-    var params = 'aesEncryptedMessage=' + aesEncryptedMessage + 
-                 '&iv=' + iv +
-                 '&chatId=' + chatId;           
-    http.open('POST', url, true);
-    http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    http.onreadystatechange = function() {
-        if(http.readyState == 4 && http.status == 200) {
-            if(http.responseText == "success"){
-                getMessages();
-            } else document.getElementById('output').innerHTML += 
-                removeTags(http.responseText);
-        }
-    }
-    http.send(params);
-    displayStickers();
-}
-
-// Closure for sticker display toggle
-var displayStickerCheck = (function(){
-    var check = false;
-    return function(){
-        if(check) check = false; 
-        else check = true;
-        return check;
-    }
-})();
-
-
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -365,11 +305,11 @@ function removeTags(html){
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
-
+// Request messages on page load
+// Request new messages every 6 seconds
 function updateGroupMessages(){
     getGroupMessages();
-    //setInterval(getGroupMessages, 10000);
-    requestGroupChatUpdates(groupChatId);
+    setInterval(getGroupMessages, 6000);
 }
 
 // stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript-elegantly
@@ -427,7 +367,14 @@ function randColor(myText){
 }
 
 // Generates HTML out to be appended to the output div of chat
-function getMessageHtml(a, displayName, messageText, timeStamp){
+function getMessageHtml(id, displayName, messageText, timeStamp){
+    if(checkImageURL(messageText) && id != "tmp"){
+        testImage(messageText, id);
+        innerMessage = '<p id = "innerMessage'+id+'" class = "letters"></p>';
+    } else {
+        innerMessage = '<p id="innerMessage'+id+'" class="letters">'+messageText+'</p>';
+    }
+
     icon = displayName.substring(0, 1);
     color = randColor(icon);
 
@@ -444,10 +391,11 @@ function getMessageHtml(a, displayName, messageText, timeStamp){
 
     // The message div and all of its contents
     return '' + 
-    '<div id="messageContainer'+a+'" class="messageContainer" style="'+side+'">'+ 
+    '<div id="messageContainer'+id+'" class="messageContainer" style="'+side+'">'+ 
         '<div class="userIdCard '+color+'" style="'+side+'">'+icon+'</div>'+ 
-        '<div class = "messageBody" style = "'+side+' '+borderRadius+'">'+ 
-            '<p class = "letters">'+messageText+'</p>'+ 
+        '<div id="message'+id+'" class="messageBody" style="'+side+' '+borderRadius+'">'+
+            innerMessage+ 
+            '<div class="displayNameStamp">'+displayName+'</div>'+ 
             '<div class="timeStamp" style="'+timeSide+'">'+timeStamp+'</div>'+ 
         '</div>'+ 
     "</div>";
@@ -460,28 +408,37 @@ function getMessageHtml(a, displayName, messageText, timeStamp){
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
+// Standard response for declining chat invite
 ackNoThanks = "no thanks";
 
 // Send request to server to make a group chat and send requests to designated users.
-// "users" is string with user ids seperated by "-"
+// "users" is string with user names seperated by ","
 function establishPrivateGroupChat(){
     users = document.getElementById('userReceivers').value;
     chatName = document.getElementById('groupChatName').value;
 
-    var http = new XMLHttpRequest();
-    var url = 'submitMakeGroupChat.php';
-    var params = 'users=' + users + '&chatName=' + chatName;          
-    http.open('POST', url, true);
-    http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    http.onreadystatechange = function() {
-        if(http.readyState == 4 && http.status == 200){
-            alert(removeTags(http.responseText));
+    if(users.length > 0 && chatName.length > 0){
+        var http = new XMLHttpRequest();
+        var url = 'submitMakeGroupChat.php';
+        var params = 'users=' + users + '&chatName=' + encodeURIComponent(chatName);          
+        http.open('POST', url, true);
+        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        http.onreadystatechange = function(){
+            if(http.readyState == 4 && http.status == 200){
+                document.getElementById('userReceivers').value = "";
+                document.getElementById('groupChatName').value = "";
+
+                ui_closeAlert();
+                ui_displayAlert([removeTags(http.responseText)], true, "notice");
+            }
         }
+        http.send(params);
+    } else {
+        ui_closeAlert();
+        ui_displayAlert(["Empty fields found."], true, "notice");
     }
-    http.send(params);
 }
 
-// Should not encrypt "no thanks" message because of known text attacks
 function respondGroupChatRequest(ack, chatId, requestId, creatorPublicKey){
     if(ack == 1) encryptedKey = rsaEncrypt(randStr(16), creatorPublicKey);
     else encryptedKey = ackNoThanks;
@@ -496,13 +453,16 @@ function respondGroupChatRequest(ack, chatId, requestId, creatorPublicKey){
     http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     http.onreadystatechange = function(){
         if(http.readyState == 4 && http.status == 200){
-            document.getElementById("groupChatRequest" + chatId).outerHTML = "";
-            alert(removeTags(http.responseText));
+            document.getElementById("groupChatRequest" + chatId).innerHTML = "";
+            ui_closeAlert();
+            ui_displayAlert([removeTags(http.responseText)], true, "notice");
         }
     }
     http.send(params);
 }
 
+// Once all users have responded to invites, original creator must construct final
+// keys, ecnrypt them each once with each user's public key, then post to DB.
 function makeGroupChatKeys(groupChatId){
     // Call php script to perform $groupChatConfirmations for specific groupChatId
     var http = new XMLHttpRequest();
@@ -529,34 +489,48 @@ function makeGroupChatKeys(groupChatId){
                 }
             }
 
-            // Add this user's portion
-            encryptedKeys += userId + ":" + randStr(16);
-            publicKeys.push([userId, publicKey]);
-            
-            // Encrypt the encryptedKeys with each user's public key who accepted the invite
-            encryptedBatch = "";
-            for(a = 0; a < publicKeys.length; a++){
-                encryptedBatch += publicKeys[a][0] + ":" + 
-                    rsaEncrypt(encryptedKeys, publicKeys[a][1]) + ",";
-            }
-
-            // Post encryptedBatch to server to store groupChatKeys on DB
-            var http2 = new XMLHttpRequest();
-            var url2 = 'submitMakeGroupChatKeys.php';
-            var params2 = 'encryptedBatch=' + groupChatId + "|" + encryptedBatch;
-            http2.open('POST', url2, true);
-            http2.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            http2.onreadystatechange = function(){
-                if(http2.readyState == 4 && http2.status == 200){
-                    //alert(removeTags(http2.responseText));
+            if(publicKeys.length > 0){
+                // Add this user's portion
+                encryptedKeys += userId + ":" + randStr(16);
+                publicKeys.push([userId, publicKey]);
+                
+                // Encrypt the encryptedKeys with each user's public key who accepted invite
+                encryptedBatch = "";
+                for(a = 0; a < publicKeys.length; a++){
+                    encryptedBatch += publicKeys[a][0] + ":" + 
+                        rsaEncrypt(encryptedKeys, publicKeys[a][1]) + ",";
                 }
+
+                // Post encryptedBatch to server to store groupChatKeys on DB
+                var http2 = new XMLHttpRequest();
+                var url2 = 'submitMakeGroupChatKeys.php';
+                var params2 = 'encryptedBatch=' + groupChatId + "|" + encryptedBatch;
+                http2.open('POST', url2, true);
+                http2.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                http2.onreadystatechange = function(){
+                    if(http2.readyState == 4 && http2.status == 200){
+                        //alert(removeTags(http2.responseText));
+                    }
+                }
+                http2.send(params2);
+            } else {
+                // Deactivate all chat creation vars because everyone invited has declined
+                var http2 = new XMLHttpRequest();
+                var url2 = 'submitDeactivateChatCreation.php';
+                var params2 = 'groupChatId=' + groupChatId;
+                http2.open('POST', url2, true);
+                http2.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                http2.onreadystatechange = function(){
+                    if(http2.readyState == 4 && http2.status == 200){
+                        //alert(removeTags(http2.responseText));
+                    }
+                }
+                http2.send(params2);
             }
-            http2.send(params2);
         }
     }
     http.send(params);
 }
-
 
 // Post a message to private group chat.
 function postGroupMessage(){
@@ -592,6 +566,8 @@ function postGroupMessage(){
                 if(http.responseText == "success"){
                     document.getElementById('messageBox').value = "";
                     
+                    message = removeTags(message);
+                    message = emoteDecoder(message);
                     msg = getMessageHtml("tmp", userName, message, "");
                     document.getElementById('tmpMessages').innerHTML += msg;
                     var objDiv = document.getElementById("messagesContainer");
@@ -623,6 +599,8 @@ function reEnablePosting(id, time){
 // Return true if ratchet's state is properly known.
 // Return false if ratchet update is uncertain.
 function getGroupMessages(){
+    newMessageCheck = false;
+
     // Check if user is still active on the page. 
     // If not, only call server once every intervalExtension times getNewMessages()
     // is called. This simply decreases traffic to/from client/server when user is
@@ -664,6 +642,10 @@ function getGroupMessages(){
                         newText += '<div class = "dateSeparator">' + date + '</div>';
                     }
 
+                    // Set boolean to true to cause device vibration notice of new message
+                    if(url == 'requestNewGroupChatMessages.php' &&
+                        message["userId"] != userId) newMessageCheck = true;
+
                     groupChatRatchets[message["userId"]].updateState();
                     messageText = aesDecryptWithIv(
                         message["encryptedMessage"], 
@@ -672,10 +654,10 @@ function getGroupMessages(){
                     );
 
                     messageText = emoteDecoder(depadMessage(messageText));
-                    messageText = stickerDecoder(messageText);
+                    //messageText = stickerDecoder(messageText);
                     messageText = removeTags(messageText);
+
                     timeStamp = message["timeStamp"].substring(10, 16);
-                        
                     newText += getMessageHtml(
                         message["messageId"], 
                         message["userName"], 
@@ -684,7 +666,8 @@ function getGroupMessages(){
                     );
                 }
 
-                // Move the postingRatchet to the current state of the this user's decrypting ratchet
+                // Move the postingRatchet to the current state of the this user's 
+                // decrypting ratchet
                 postingRatchet.setState(
                     groupChatRatchets[userId].xorOut, 
                     groupChatRatchets[userId].state1, 
@@ -694,86 +677,26 @@ function getGroupMessages(){
                 document.getElementById('tmpMessages').innerHTML = "";
                 document.getElementById('output').innerHTML += newText;
                 var objDiv = document.getElementById("messagesContainer");
+
+                // For each message containing a valid image url, display image instead
+                // of url. The delete the item in the hashmap so it doesnt load everytime 
+                // there is a pole response from server
+                setTimeout(function(){
+                    for(id in imageMessages){
+                        document.getElementById("innerMessage" + id).
+                            appendChild(imageMessages[id]);
+                    }
+
+                    imageMessages = Object();
+                    objDiv.scrollTop = objDiv.scrollHeight;
+                }, 500);
+
+                if(newMessageCheck) notificationEvent();
                 objDiv.scrollTop = objDiv.scrollHeight;
             }
         }
         http.send(params);
     }
-}
-
-// Establishes event stream with server to receive push updates.
-function requestGroupChatUpdates(groupChatId){
-    var http = new XMLHttpRequest();
-    var url = 'setExponentialBackoffByChatId.php';
-    var params = 'groupChatId=' + groupChatId; 
-    http.open('POST', url, true);
-    http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    http.onreadystatechange = function(){
-        if(http.readyState == 4 && http.status == 200){
-
-            var source = new EventSource("requestGroupChatUpdates.php?groupChatId=" + groupChatId);
-
-            source.onmessage = function(event) {
-                chatOutputArray = JSON.parse(removeTags(event.data));
-
-                // Update page title with number of unread messages
-                if(!userActive){
-                    if(chatOutputArray.length > 0){
-                        numUpdates += chatOutputArray.length;
-                        document.title = "Chat (" + numUpdates + ")";
-                    }
-                } else document.title = "Chat";
-                
-                // For each message, decrypt text and format the meta display info.
-                // Tags must always be removed from this text... and unfortunately 
-                // must be done client side as to maintain privacy. 
-                // To anyone attempting to edit their client side page code, do not 
-                // disable this text sanitizer. If you do your entire account may 
-                // become compromised.
-                newText = "";
-                for(a = 0; a < chatOutputArray.length; a++){
-                    message = chatOutputArray[a];
-                    if(date != message["timeStamp"].substring(0, 10)){
-                        date = message["timeStamp"].substring(0, 10);
-                        newText += '<div class = "dateSeparator">' + date + '</div>';
-                    }
-
-                    groupChatRatchets[message["userId"]].updateState();
-                    messageText = aesDecryptWithIv(
-                        message["encryptedMessage"], 
-                        groupChatRatchets[message["userId"]].xorOut, 
-                        message["iv"]
-                    );
-
-                    messageText = emoteDecoder(depadMessage(messageText));
-                    messageText = stickerDecoder(messageText);
-                    messageText = removeTags(messageText);
-                    timeStamp = message["timeStamp"].substring(10, 16);
-                        
-                    newText += getMessageHtml(
-                        message["messageId"], 
-                        message["userName"], 
-                        messageText, 
-                        timeStamp
-                    );
-                }
-
-                // Move the postingRatchet to the current state of the this user's decrypting ratchet
-                postingRatchet.setState(
-                    groupChatRatchets[userId].xorOut, 
-                    groupChatRatchets[userId].state1, 
-                    groupChatRatchets[userId].state2
-                );
-
-                document.getElementById('tmpMessages').innerHTML = "";
-                document.getElementById('output').innerHTML += newText;
-                var objDiv = document.getElementById("messagesContainer");
-                objDiv.scrollTop = objDiv.scrollHeight;
-            };
-
-        }
-    }
-    http.send(params);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -839,3 +762,71 @@ function charLevelXor(str1, str2){
         return ret;
     } else return null;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function notificationEvent(){
+    /*var audio = new Audio("library/soundFiles/notification.mp3");
+    audio.play();
+
+
+    window.navigator.vibrate([100,30,100,30,100,30,200,30,200,30,200,30,100,30,100,30,100]);
+    /*
+    filename = "library/soundFiles/notification";
+    var mp3Source = '<source src="' + filename + '.mp3" type="audio/mpeg">';
+    var oggSource = '<source src="' + filename + '.ogg" type="audio/ogg">';
+    var embedSource = '<embed hidden=
+        "true" autostart="true" loop="false" src="' + filename +'.mp3">';
+    document.getElementById("sound").innerHTML=
+        '<audio autoplay="autoplay">' + mp3Source + oggSource + embedSource + '</audio>';
+    */
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+// https://stackoverflow.com/questions/9714525/javascript-image-url-verify
+
+imageMessages = Object();
+
+function checkImageURL(url){
+    if(url.substring(0,5) == "https")
+        return(url.match(/\.(jpeg|jpg|gif|png|JPEG|JPG|GIF|PNG)$/) != null);
+}
+
+function testImage(url, id){
+    if(url.substring(0,5) == "https"){ 
+        url = url.replace("javascript", "");
+        url = url.replace("'", "");
+        url = url.replace("\"", "");
+        //url = encodeURIComponent(url);
+
+        timeout =  1000;
+        var timedOut = false, timer;
+        var img = new Image();
+
+        img.onerror = img.onabort = function() {
+            if (!timedOut) {
+                clearTimeout(timer);
+            }
+        };
+        img.onload = function() {
+            if (!timedOut) {
+                clearTimeout(timer);
+                imageMessages[id] = img;
+            }
+        };
+        img.src = url;
+        timer = setTimeout(function() {
+            timedOut = true;
+        }, timeout); 
+    }
+}
+

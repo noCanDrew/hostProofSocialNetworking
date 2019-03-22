@@ -1,7 +1,9 @@
-// https://stackoverflow.com/questions/295566/sanitize-rewrite-html-on-the-client-side
-
+// stackoverflow.com/questions/295566/sanitize-rewrite-html-on-the-client-side
+// Removes tags from text that mnay contain HTML.
+// Used as a post process for text display client side. Once client side has decrypted 
+// text from server, the text is then stripped of all tags so that malicious injections 
+// are prevented prior to text laoding on page.
 var tagBody = '(?:[^"\'>]|"[^"]*"|\'[^\']*\')*';
-
 var tagOrComment = new RegExp(
     '<(?:'
     // Comment body.
@@ -13,12 +15,15 @@ var tagOrComment = new RegExp(
     + '|/?[a-z]'
     + tagBody
     + ')>',
-    'gi');
-function removeTags(html) {
-  var oldHtml;
-  do {
-    oldHtml = html;
-    html = html.replace(tagOrComment, '');
-  } while (html !== oldHtml);
-  return html.replace(/</g, '&lt;');
+    'gi'
+);
+
+function removeTags(html){
+    var oldHtml;
+    do{
+        oldHtml = html;
+        html = html.replace(tagOrComment, '');
+    } while (html !== oldHtml);
+    return html.replace(/</g, '&lt;');
+    return html;
 }
