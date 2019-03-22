@@ -2,16 +2,17 @@
 	include "library/sessionStart.php";
 	include "library/dbInterface.php";
 	if(!isset($_SESSION["aesSessionKey"])) 
-		header("Location: https://collaber.org/harpocrates/login.php");
+		header("Location: login.php");
 
 	if(!empty($_POST["ack"]) &&
 		!empty($_POST["chatId"]) &&
 		!empty($_POST["requestId"])){
 		
-		$ack = str_replace(" ","+",strip_tags(trim($_POST['ack'])));
+		$ack = strip_tags(trim($_POST['ack']));
 		$chatId = strip_tags(trim($_POST['chatId']));
 		$requestId = strip_tags(trim($_POST['requestId']));
-
+		if($ack != "no thanks") $ack = str_replace(" ","+", $ack);
+		
 		// Update privateChat table acknowledging chat establishment
     	$table = "privateGroupChatRequest";
 		$cols = array("acknowledge");

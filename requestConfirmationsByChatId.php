@@ -2,13 +2,13 @@
 	include "library/sessionStart.php";
 	include "library/dbInterface.php";
 	if(!isset($_SESSION["aesSessionKey"])) 
-		header("Location: https://collaber.org/harpocrates/login.php");	
+		header("Location: login.php");	
 	else{
 		if(!empty($_POST["groupChatId"])){
 			$groupChatId = strip_tags(trim($_POST['groupChatId']));
 			
 			// Get groupChatRequest responses from given groupChatId.
-			// Also get the reponders public key.
+			// Also get the responders' public key.
 		    $groupChatConfirmations = $dbc->prepare($groupChatConfirmations = "SELECT 
 		            pgc.id,
 		            pgcr.idUserReceiver,

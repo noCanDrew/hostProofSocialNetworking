@@ -4,7 +4,7 @@
     include "library/sessionStart.php";
     include "library/dbInterface.php";
     if(!isset($_SESSION["aesSessionKey"])) 
-        header("Location: https://collaber.org/harpocrates/login.php");
+        header("Location: login.php");
 
     // Set session var array for user chat access control. This array is used for any future
     // chat related queries to authenticate the user submitting the request
@@ -15,32 +15,33 @@
     // Push each chatId from resulting query to the accessibleChats session var array for 
     // future access control checks.
     $chats = "";
-    $oldChats = $dbc->prepare($oldChats = "SELECT 
-            pgc.id, pgc.chatName, pgck.encryptedSecretKey
-         FROM 
-            privateGroupChat pgc
-            LEFT JOIN privateGroupChatKeys pgck
-                ON pgc.id = pgck.idPrivateGroupChat
-         WHERE 
-            pgck.idUserOwner = ?
-        ");
-        $oldChats->bind_param("i", $_SESSION["userId"]);
-        $oldChats->execute();
-        $oldChats->bind_result($pgcId,  $pgcChatName, $pgckEncryptedSecretKey);
-        if($oldChats){  
-            while($oldChats->fetch()){
-                // Push chatId and key into session var array that can be used for chat 
-                // access control when future chat related queries are performed. 
-                // Build the return string to be echoed
-                $_SESSION["accessibleChats"][$pgcId] = $pgckEncryptedSecretKey;
-                $chats .= '
-                    <a href = "groupChat.php?groupChatId=' . $pgcId . '">' . 
-                    $pgcChatName . "</a><br>";
-            }
+    $existingChats = $dbc->prepare($existingChats = "SELECT 
+        pgc.id, pgc.chatName, pgck.encryptedSecretKey
+     FROM 
+        privateGroupChat pgc
+        LEFT JOIN privateGroupChatKeys pgck
+            ON pgc.id = pgck.idPrivateGroupChat
+     WHERE 
+        pgck.idUserOwner = ?
+    ");
+    $existingChats->bind_param("i", $_SESSION["userId"]);
+    $existingChats->execute();
+    $existingChats->bind_result($pgcId,  $pgcChatName, $pgckEncryptedSecretKey);
+    if($existingChats){  
+        while($existingChats->fetch()){
+            // Push chatId and key into session var array that can be used for chat 
+            // access control when future chat related queries are performed. 
+            // Build the return string to be echoed
+            $_SESSION["accessibleChats"][$pgcId] = $pgckEncryptedSecretKey;
+            $chats .= '<div class = "indexSubsectionContainer">
+                <a href = "groupChat.php?groupChatId=' . $pgcId . '">' . 
+                    $pgcChatName . 
+                "</a>
+            </div>";
         }
-    $oldChats->close();
+    }
+    $existingChats->close();
 
     // Echo contaner withh all associated chats
-    echo '<div id = "groupChats" class = "indexSectionContainer"> 
-            Group Chats:<br>' . $chats . '</div>';
+    echo $chats;
 ?>

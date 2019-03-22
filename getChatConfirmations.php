@@ -4,7 +4,7 @@
     include "library/sessionStart.php";
     include "library/dbInterface.php";
     if(!isset($_SESSION["aesSessionKey"])) 
-        header("Location: https://collaber.org/harpocrates/login.php");
+        header("Location: login.php");
 
 
 
@@ -55,7 +55,7 @@
                 // If all reponses are accounted for, append createChat script
                 // $groupChat[0][0] is the groupChatId
                 if($numReplies == count($groupChat)){
-                    $activateGroupChat .= "makeGroupChatKeys(" . $groupChat[0][0] . "); ";
+                    $activateGroupChat .= "setTimeout(makeGroupChatKeys(" . $groupChat[0][0] . "), 0); ";
                 }
             }
         }

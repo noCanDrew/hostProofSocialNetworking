@@ -4,13 +4,15 @@
     include "library/sessionStart.php";
     include "library/dbInterface.php";
     if(!isset($_SESSION["aesSessionKey"])) 
-        header("Location: https://collaber.org/harpocrates/login.php");   
+        header("Location: login.php");   
 ?><!DOCTYPE HTML>
 
 <html>
     <head>
-        <title> Harpocrates </title>
+        <title> IM </title>
 
+        <meta charset="UTF-8">
+        <meta name="theme-color" content="rgb(45,45,45)">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <?php 
@@ -29,6 +31,9 @@
         <script src="library/aes.js"></script>
         <script src="library/api.js"></script>
         <script src="library/aesRicemoo.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <script src="library/alerts.js"></script>
         <script src="library/harpocrates.js"></script>
 
         <?php 
@@ -44,23 +49,55 @@
     </head>
     
     <body>
-        <div class = "indexSectionContainer">
-            Establish connection with group of users: <br>
-            <input type="text" id = "userReceivers"><br>
-            <input type="text" id = "groupChatName"><br>
-            <button onclick="establishPrivateGroupChat()">Submit</button>
+        <div class = "indexSectionContainer shadow">
+            <div class = "indexSectionContainerHeader">
+                <i class="fa fa-envelope" aria-hidden="true"></i>
+                &nbsp;Invite users to chat
+                <div style = "float: right"> 
+                    <a onclick="ui_displayAlert(makeNewInvitesAlert, true, '')"><i class="fa fa-question-circle-o" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <div class = "indexSubsectionContainer">
+                <input type="text" class = "inputField" id = "userReceivers" placeholder = "Users" maxlength="1000">
+            </div>
+            <div class = "indexSubsectionContainer">
+                <input type="text" class = "inputField" id = "groupChatName" placeholder = "Chat name" maxlength="32">
+            </div>
+            <div class = "indexSubsectionContainer">
+                <button onclick="establishPrivateGroupChat()" class = "">Submit</button>
+            </div>
         </div>
         
-        <?php 
-            // Get container element for all chat requests.
-            include "getChatRequests.php";
+        <div id = "groupChatRequests" class = "indexSectionContainer shadow">
+            <div class = "indexSectionContainerHeader"> 
+                <i class="fa fa-envelope-open" aria-hidden="true"></i> 
+                &nbsp;Chat invites 
+                <div style = "float: right"> 
+                    <a onclick="ui_displayAlert(chatInviteAlert, true, '')"><i class="fa fa-question-circle-o" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <?php
+                // Get container element for all chat requests.
+                include "getChatRequests.php";
+            ?>
+        </div>
 
-            // Get container element for all existing chats useer is a member of.
-            include "getExistingChats.php";
-        ?>
+        <div id = "groupChatRequests" class = "indexSectionContainer shadow">
+            <div class = "indexSectionContainerHeader">
+                <i class="fa fa-comments" aria-hidden="true"></i> 
+                &nbsp;Chats 
+                <div style = "float: right"> 
+                    <a onclick="ui_displayAlert(chatsAlert, true, '')"><i class="fa fa-question-circle-o" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <?php
+                // Get container element for all existing chats useer is a member of.
+                include "getExistingChats.php";
+            ?>
+        </div>
 
         <form action="submitLogout.php">
-            <input type="submit" value="Logout" />
+            <button type="submit" class = "">Sign out</button>
         </form>
     </body>
 </html>

@@ -2,11 +2,11 @@
 	include "library/sessionStart.php";
 	include "library/dbInterface.php";
 	if(!isset($_SESSION["aesSessionKey"])) 
-		header("Location: https://collaber.org/harpocrates/login.php");
+		header("Location: login.php");
 
 	if(!empty($_POST["users"]) && !empty($_POST["chatName"])){
 		$chatName = strip_tags(trim($_POST['chatName']));
-		$userArr = explode("-", $_POST['users']);
+		$userArr = explode(",", $_POST['users']);
 		$userId = $_SESSION["userId"];
 
 		// Make sure the number of invites is reasonable
@@ -18,7 +18,7 @@
 			// Remove all instances where userName is an empty string
 			// Remove any instance where user is attempting to invite themselves
 	    	for($a = 0; $a < count($userArr); $a++){
-	    		$userArr[$a] = strip_tags(trim($userArr[$a]));
+	    		$userArr[$a] = strtolower(strip_tags(trim($userArr[$a])));
 	    		if($userArr[$a] == "" || $userArr[$a] == $_SESSION["userName"]){
 	    			unset($userArr[$a]);
 	    			$userArr = array_values($userArr);
@@ -120,7 +120,9 @@
 				} else echo "error 2";
 			} else {
 				echo "The following users do not exist: <br>";
-				print_r($dneArr);
+				foreach($dneArr as $name){
+					echo $name . ", ";
+				}
 			}
 		} else echo "error 3";
 	} else echo "error 4";

@@ -4,7 +4,7 @@
     include "library/sessionStart.php";
     include "library/dbInterface.php";
     if(!isset($_SESSION["aesSessionKey"])) 
-        header("Location: https://collaber.org/harpocrates/login.php");
+        header("Location: login.php");
 
     // Get chat requests
     // Join privateGroupChat with privateGroupChatRequests to get userId of chat creator
@@ -43,26 +43,31 @@
         );
         if($newGroupChatRequests){  
             while($newGroupChatRequests->fetch()){
-                $groupChatRequests .= '
-                    <div id = "groupChatRequest' . $privateGroupChatId . '">' . 
-                    $creatorUserName . " has invited you to join " . 
-                    $privateGroupChatChatName . '.<br>' . 
-                    '<a class = "" onclick="respondGroupChatRequest(\'' . '1' .'\', \'' .
-                     $privateGroupChatId  . '\', \'' . $privateGroupChatRequestId  .
-                      '\', \'' .  $creatorPublicKey. '\')">' .  
+                $groupChatRequests .= 
+                    '<div id = "groupChatRequest' . $privateGroupChatId . '" class = "indexSubsectionContainer">'.
+                        '<p>' . $creatorUserName . 
+                        ' <span style = "font-size:.66em; color:rgb(178,121,40)">has invited you to join</span> ' . 
+                        $privateGroupChatChatName . '</p>' . 
+                        ''.
+                        '<button class = "" onclick="respondGroupChatRequest(\'' . '1' .'\', \'' .
+                            $privateGroupChatId  . '\', \'' . $privateGroupChatRequestId  .
+                            '\', \'' .  $creatorPublicKey. '\')">' .  
                             'Accept' .
-                        "</a> | " .
-                    '<a class = "" onclick="respondGroupChatRequest(\'' . '0' .'\', \'' .
-                     $privateGroupChatId  . '\', \'' . $privateGroupChatRequestId  .
-                      '\', \'' .  $creatorPublicKey. '\')">' .  
+                        '</button>' .
+                        '&nbsp;&nbsp;' . 
+                        '<button class = "" onclick="respondGroupChatRequest(\'' . '0' .'\', \'' .
+                            $privateGroupChatId  . '\', \'' . $privateGroupChatRequestId  .
+                            '\', \'' .  $creatorPublicKey. '\')">' .  
                             'Decline' .
-                        "</a><br><br></div>"
+                        '</button>' .
+                    '</div>
+                    <div class = "rowSeparator"></div>'
                 ;
             }
         }
     $newGroupChatRequests->close();
 
     // Echo contaner withh all associated chat requests
-    echo '<div id = "groupChatRequests" class = "indexSectionContainer">
-            Group Chat Requests:<br>' .  $groupChatRequests . '</div>';
+    // Remove last line break from string for uniformity
+    echo substr($groupChatRequests, 0, -strlen('<div class = "rowSeparator"></div>'));
 ?>

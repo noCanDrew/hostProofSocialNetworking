@@ -2,7 +2,7 @@
 	include "library/sessionStart.php";
 	include "library/dbInterface.php";
 	if(!isset($_SESSION["aesSessionKey"])) 
-		header("Location: https://collaber.org/harpocrates/login.php");
+		header("Location: login.php");
 
 	if(!empty($_POST["groupChatId"]) &&
 	   !empty($_POST["iv"]) &&

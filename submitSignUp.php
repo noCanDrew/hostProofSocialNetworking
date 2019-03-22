@@ -15,12 +15,13 @@
 		$publicKey = str_replace(" ","+", $publicKey);
 		$encryptedRsaSeed = strip_tags(trim($_POST['encryptedRsaSeed']));
 
+		
 		// Ensure user inputs meet initial submission criteria
 		if(strlen($salt) == 16 &&
 			strlen($userName) > 0 &&
 			strlen($userName) <= 16 &&
 			strlen($hashword) == 64 && 
-			strlen($publicKey) == 172 &&
+			strlen($publicKey) == 344 &&
 			strlen($encryptedRsaSeed) == 256 &&
 			ctype_alnum($userName) &&
 			ctype_alnum($hashword) && 
@@ -53,6 +54,6 @@
 			} else echo "Error: User name already in use.";
 		} else echo "Error: username must be between 1 and 16 characters and can only contain alphanumerics." .
 					" Password must be exactly 16 characters";
-	} else echo "Error: missing informatio.n";
+	} else echo "Error: missing informatio.";
 	$dbc->close();
 ?>
