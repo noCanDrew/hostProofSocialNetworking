@@ -1,9 +1,21 @@
+html {
+    min-height: 100%;
+    width: 100%;
+}
+
 body{
 	overflow: hidden;
 	font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
 	margin: 0px;
 	padding: 0px;
-	font-size: 2.5em;
+	font-size: 1.5em;
+    background: none;
+    background-color: rgb(35,35,35);
+    position: absolute;
+    width: 100%;
+    min-height: 100%;
+    top: 0px;
+    left: 0px;
 }
 
 /* Wraps normally, on whitespace */
@@ -33,46 +45,47 @@ p.letters {
     background: -webkit-linear-gradient(to right, rgb(0, 114, 255), rgb(0, 150, 255));
 }
 
+.flex-container {
+  display: flex;
+}
+
+.fill-width {
+  flex: 1;
+}
+
 .button{
-	border: none;
+    position: relative;
+    float: left;
+    border: none;
     padding: .5em;
-    margin-top: .2em;
-    margin-left: .2em;
-    border-radius: .5em .5em 0em 0em;
-    color: rgb(178,255,65);
-    background-color: rgb(40,118,146);
+    margin-right: .5em;
+    border-radius: .2em;
+    color: rgb(208,151,70);
+    background-color: rgba(65,65,65, 0);
+    border: 1px solid rgba(208,151,70,.75);
     cursor: pointer;
     font-size: 1em;
     outline: none;
 }
 .button:hover{
+    border: 1px solid rgb(208,151,70);
 	transform: scale(1.1);
 }
 
-.nuttonUserInput{
+.buttonUserInput{
 	float: left;
 }
 
 .messagesContainer{
-	/*position: absolute;
-	top: 0px;
-	left: 0px;
-	height: 80%;
-	width: 100%;
-	overflow: auto;
-	color: rgb(35,35,35);
-	background-color: rgb(235,235,235);*/
-
 	position: absolute;
+    bottom: 4.5em;
     top: 0px;
     left: 0px;
-    height: 80%;
     width: 100%;
     overflow: auto;
     color: rgb(35,35,35);
     scrollbar-width: thin;
-    scrollbar-color: rgb(178,255,65) rgb(35,35,35);
-    //background-color: rgb(208,208,208);
+    scrollbar-color: rgb(95,95,95) rgb(35,35,35);
     background-color: rgb(35,35,35);
 }
 
@@ -85,8 +98,8 @@ p.letters {
 }
  
 .messagesContainer::-webkit-scrollbar-thumb {
-  background-color: rgb(178,255,65);
-  outline: 1px solid rgba(178,255,65,0);
+  background-color: rgb(95,95,95);
+  outline: 1px solid rgba(208,151,70,0);
   border-radius: .33em;
 }
 
@@ -152,6 +165,20 @@ p.letters {
     color: rgb(75,75,75);
 }
 
+.displayNameStamp{
+    position: absolute;
+    top: -1em;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    color: rgb(75,75,75);
+    text-align: center;
+    width: 100%;
+    height: 1.33em;
+    overflow: hidden;
+    left: 0px;
+    right: 0px;
+}
+
 .dateSeparator{
 	position: relative;
 	float: left;
@@ -161,17 +188,20 @@ p.letters {
 	margin-left: 0px;
 	margin-right: 0px;
 	text-align: center;
-	color: rgb(178,255,65);
-	border-bottom: 1px solid rgba(178,255,65,.33);
+	//color: rgb(178,255,65);
+	//border-bottom: 1px solid rgba(178,255,65,.33);
+	color: rgb(75,75,75);
+    border-bottom: 1px solid rgba(75,75,75,.66);
 }
 
 .userInputContainer{
 	position: absolute;
-	top: 80%;
-	left: 0px;
-	height: 20%;
-	width: 100%;
-	background-color: rgb(35,35,35);
+    bottom: 0px;
+    left: 0px;
+    height: 20%;
+    min-height: 10em;
+    width: 100%;
+    background-color: rgb(35,35,35);
 }
 
 .userInput{
@@ -182,51 +212,149 @@ p.letters {
 	float: left;
 }
 
+img{
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+}
+
 .messageBox{
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-	height: 100%;
-	min-height: 1.5em;
-	padding: .5em;
-	padding-top: .75em;
-	border-radius: .5em;
-	border: 1px solid rgb(65,65,65);
-	outline: none;
-	resize: none;
-	font-size: 1em;
-	color: rgb(235,235,235);
-	background-color: rgb(45,45,45);
-	font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+	position: relative;
+    padding: .5em;
+    width: 100%;
+    float: right;
+    border-radius: .2em;
+    border: 1px solid rgb(65,65,65);
+    outline: none;
+    resize: none;
+    font-size: 1em;
+    color: rgb(235,235,235);
+    background-color: rgb(45,45,45);
+    font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.messageBoxAlt{
+    position: relative;
+    padding: .5em;
+    width: 100%;
+    float: right;
+    border-radius: .2em;
+    border: 1px solid rgb(208,151,70);
+    outline: none;
+    resize: none;
+    font-size: 1em;
+    color: rgb(208,151,70);
+    background-color: rgb(45,45,45);
+    font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.messageBox::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: rgba(235,235,235, .4);
+  opacity: 1; /* Firefox */
+}
+
+.messageBox:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: rgba(235,235,235, .4);
+}
+
+.messageBox::-ms-input-placeholder { /* Microsoft Edge */
+  color: rgba(235,235,235, .4);
 }
 
 .messageBoxContainer{
 	position: absolute;
-    top: 2em;
-    left: .5em;
-    right: 2em;
-    bottom: 2em;
+    bottom: 1em;
+    left: 1em;
+    right: 1em;
+    padding-top: 1em;
+    border-top: 1px solid rgb(65,65,65);
+    background-color: rgb(35,35,35);
 }
 
 .messageBoxButtons{
-	position: absolute;
+	position: relative;
+    float: right;
     left: .5em;
     right: .33em;
-    top: 0px;
-    background-color: rgb(35,35,35);
+    /* top: 0em; */
     z-index: 10;
-    overflow: hidden;
+    /* min-width: 14em; */
 }
 
-.emotesList{
-	position: relative;
+.messageOptionsContainer{
+	position: fixed;
+    left: 50%;
+    bottom: 4.4em;
+    transform: translate(-50%, 0%);
     background-color: rgb(45,45,45);
+    border-radius: .2em .2em 0px 0px;
+    padding: .5em;
     overflow: auto;
     display: none;
+    max-height: 10em;
+    width: 90%;
+    letter-spacing: .5em;
+    line-height: 1.5em;
+}
+
+.messageOptionsContainer::-webkit-scrollbar {
+    width: .25em;
+}
+ 
+.messageOptionsContainer::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 8px rgba(0,0,0,0.33);
+}
+ 
+.messageOptionsContainer::-webkit-scrollbar-thumb {
+  background-color: #d09746;
+  outline: 1px solid rgba(178,255,65,0);
+  border-radius: .33em;
 }
 
 .sticker{
 	height: 5em;
 }
 
+.pageAlert{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    max-height: 80%;
+    width: 80%;
+    max-width: 25em;
+    min-width: 10em;
+    transform: translate(-50%, -50%);
+    padding-bottom: 1em;
+    padding-top: 0px;
+    border-radius: .2em;
+    overflow: auto;
+    background-color: rgb(35,35,35);
+    z-index: 100;
+    box-shadow: 0px 23px 49px -18px #1F1F1F;
+}
+
+.pageShade{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(235,235,235,.75);
+    z-index: 99;
+}
+
+ul.tips{
+    margin-right: 1.33em;
+}
+
+li.tip{
+    color: rgb(235,235,235);
+    font-size: .75em;
+    font-weight: 400;
+    line-height: 1.66em;
+    margin-left: 1em;
+    letter-spacing: 0.06em;
+    margin-bottom: 1em;
+}
