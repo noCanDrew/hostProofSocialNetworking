@@ -381,12 +381,14 @@ function getMessageHtml(id, displayName, messageText, timeStamp){
     // CSS for user messages custimized for who in chat wrote the message
     if(displayName.trim() == userName.trim()){
         side = "float: right;";
-        timeSide = "left: -3.5em;";
+        timeSide = "left: -4em;";
         borderRadius = "border-radius: .5em 0px .5em .5em;";
+        nameSide = "";
     } else {
         side = "float: left;";
         timeSide = "right: -3.5em;";
         borderRadius = "border-radius: 0px .5em .5em .5em;";
+        nameSide = "left: 0px";
     }
 
     // The message div and all of its contents
@@ -395,7 +397,7 @@ function getMessageHtml(id, displayName, messageText, timeStamp){
         '<div class="userIdCard '+color+'" style="'+side+'">'+icon+'</div>'+ 
         '<div id="message'+id+'" class="messageBody" style="'+side+' '+borderRadius+'">'+
             innerMessage+ 
-            '<div class="displayNameStamp">'+displayName+'</div>'+ 
+            '<div class="displayNameStamp" style="'+nameSide+'">'+displayName+'</div>'+ 
             '<div class="timeStamp" style="'+timeSide+'">'+timeStamp+'</div>'+ 
         '</div>'+ 
     "</div>";
@@ -543,47 +545,63 @@ function postGroupMessage(){
         ratchetLock = true;
         document.getElementById("messageSubmit").disabled = true;
 
-        iv = randStr(16);
-        message = message.substring(0, maxMessageLength - 1);
-        paddedMessage = padMessage(message, maxMessageLength + 1);
-        postingRatchet.updateState();
-        aesEncryptedMessage = aesEncryptWithIv(
-            paddedMessage, 
+        ratchetState = [
             postingRatchet.xorOut, 
-            iv
-        );
+            postingRatchet.state1, 
+            postingRatchet.state2
+        ];
 
-        // Post encrypted message to server
-        var http = new XMLHttpRequest();
-        var url = 'submitGroupMessage.php';
-        var params = 'aesEncryptedMessage=' + aesEncryptedMessage + 
-                     '&iv=' + iv +
-                     '&groupChatId=' + groupChatId;           
-        http.open('POST', url, true);
-        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        http.onreadystatechange = function() {
-            if(http.readyState == 4 && http.status == 200) {
-                if(http.responseText == "success"){
-                    document.getElementById('messageBox').value = "";
-                    
-                    message = removeTags(message);
-                    message = emoteDecoder(message);
-                    msg = getMessageHtml("tmp", userName, message, "");
-                    document.getElementById('tmpMessages').innerHTML += msg;
-                    var objDiv = document.getElementById("messagesContainer");
-                    objDiv.scrollTop = objDiv.scrollHeight;
+        try{
+            iv = randStr(16);
+            message = message.substring(0, maxMessageLength - 1);
+            paddedMessage = padMessage(message, maxMessageLength + 1);
+            postingRatchet.updateState();
+            aesEncryptedMessage = aesEncryptWithIv(
+                paddedMessage, 
+                postingRatchet.xorOut, 
+                iv
+            );
 
-                    ratchetLock = false;
-                    reEnablePosting("messageSubmit", 3000);
-                } else {
-                    // step back posting ratchet by 1
+            // Post encrypted message to server
+            var http = new XMLHttpRequest();
+            var url = 'submitGroupMessage.php';
+            var params = 'aesEncryptedMessage=' + aesEncryptedMessage + 
+                         '&iv=' + iv +
+                         '&groupChatId=' + groupChatId;           
+            http.open('POST', url, true);
+            http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            http.onreadystatechange = function() {
+                if(http.readyState == 4 && http.status == 200) {
+                    if(http.responseText == "success"){
+                        document.getElementById('messageBox').value = "";
+                        
+                        message = removeTags(message);
+                        message = emoteDecoder(message);
+                        msg = getMessageHtml("tmp", userName, message, "pending");
+                        document.getElementById('tmpMessages').innerHTML += msg;
+                        var objDiv = document.getElementById("messagesContainer");
+                        objDiv.scrollTop = objDiv.scrollHeight;
 
-                    ratchetLock = false;
-                    reEnablePosting("messageSubmit", 3000);
+                        ratchetLock = false;
+                        reEnablePosting("messageSubmit", 3000);
+                    } else {
+                        // step back posting ratchet by 1
+
+                        ratchetLock = false;
+                        reEnablePosting("messageSubmit", 3000);
+                    }
                 }
             }
+            http.send(params);
+        } catch(e){
+            postingRatchet.setState(
+                ratchetState[0], 
+                ratchetState[1], 
+                ratchetState[2]
+            );
+            ratchetLock = false;
+            reEnablePosting("messageSubmit", 2000);
         }
-        http.send(params);
     }
 }
 
