@@ -122,5 +122,10 @@
         </div>
     </body>
     <div id="sound"></div>
+    <script>
+        document.addEventListener('keyup', function(event){
+            if(event.keyCode == 13) postGroupMessage();
+        });
+    </script>
     <script> if(mobileCheck()) document.body.style.fontSize = "1em";</script>
 </html>
