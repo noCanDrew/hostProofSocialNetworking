@@ -167,15 +167,13 @@ p.letters {
 
 .displayNameStamp{
     position: absolute;
-    top: -1em;
+    top: -1.33em;
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
     color: rgb(75,75,75);
     text-align: center;
-    width: 100%;
+    width: auto;
     height: 1.33em;
-    overflow: hidden;
-    left: 0px;
     right: 0px;
 }
 
