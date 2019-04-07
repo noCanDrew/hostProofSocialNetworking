@@ -14,7 +14,7 @@
 	}
 
 	// Takes in a string and some salt and produces a 64 char long string that is a result of chained salting/hashing
-	// with sha256.
+	// with sha1.
 	function betterHash($str, $salt){
 		if(strlen($str) == 64 && strlen($salt) == 16){
 			$iterationFactor = 100;
